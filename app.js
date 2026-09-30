@@ -241,8 +241,51 @@ function mainChart(){if(charts.main)charts.main.destroy();charts.main=new Chart(
 function expenseChart(){if(charts.exp)charts.exp.destroy();charts.exp=new Chart($("expenseChart"),{type:"doughnut",data:{labels:["Social","Logiciels","Locaux","Marketing","Autres"],datasets:[{data:[36,17,14,11,22],backgroundColor:["#26765e","#62a989","#ad7625","#7c8f86","#b74d4d"],borderWidth:0}]},options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}})}
 function forecastChart(){if(charts.fc)charts.fc.destroy();charts.fc=new Chart($("forecastChart"),{type:"line",data:{labels:["Aujourd’hui","30 j","60 j","90 j"],datasets:[{label:"Trésorerie",data:[12680,14120,15060,15920],borderColor:"#26765e",tension:.3}]},options:base()})}
  
-$("invite").onclick=()=>{modal(`<h2>Inviter un collaborateur</h2><p>Le collaborateur recevra un lien d’invitation. Les rôles seront appliqués côté serveur dans la version connectée.</p><div class="modal-form"><label>Email<input id="em" type="email" placeholder="prenom@entreprise.fr"></label><label>Rôle<select><option>Comptable</option><option>Collaborateur</option><option>Administrateur</option></select></label><button class="btn primary" id="send">Envoyer l’invitation</button></div>`);$("send").onclick=()=>{modal(`<h2>Invitation prête</h2><p>Invitation de démonstration créée pour <b>${$("em").value||"le collaborateur"}</b>. Dans la version production, elle sera envoyée par le backend.</p>`)}};
- 
+const inviteBtn = $("invite");
+
+if (inviteBtn) {
+  inviteBtn.onclick = () => {
+    modal(`
+      <h2>Inviter un collaborateur</h2>
+      <p>
+        Le collaborateur recevra un lien d’invitation.
+        Les rôles seront appliqués côté serveur dans la version connectée.
+      </p>
+
+      <div class="modal-form">
+        <label>
+          Email
+          <input id="em" type="email" placeholder="prenom@entreprise.fr">
+        </label>
+
+        <label>
+          Rôle
+          <select>
+            <option>Comptable</option>
+            <option>Collaborateur</option>
+            <option>Administrateur</option>
+          </select>
+        </label>
+
+        <button class="btn primary" id="send">
+          Envoyer l'invitation
+        </button>
+      </div>
+    `);
+
+    $("send").onclick = () => {
+      modal(`
+        <h2>Invitation prête</h2>
+        <p>
+          Invitation de démonstration créée pour
+          <b>${$("em").value || "le collaborateur"}</b>.
+          Dans la version production, elle sera envoyée par le backend.
+        </p>
+      `);
+    };
+  };
+}
+
 function stripePlan(plan){const id=plan==="pro"?LUCIDE_STRIPE.proPriceId:LUCIDE_STRIPE.premiumPriceId;if(!id){modal(`<h2>Stripe n’est pas encore relié</h2><p>Ajoute le <b>lien de paiement</b> de ${plan==="pro"?"Lucide Pro":"Lucide Premium"} dans <code>config.js</code> (créé depuis Stripe > Payment Links).</p><p>Ne mets jamais ta clé secrète Stripe dans ce fichier.</p>`);return}
   if(plan==="premium" && currentPlan==="pro"){
     if(LUCIDE_STRIPE.customerPortalUrl){ window.location.href = LUCIDE_STRIPE.customerPortalUrl; return }

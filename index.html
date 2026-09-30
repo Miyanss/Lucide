@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lucide — Pilotez votre entreprise</title>
+<meta name="description" content="Lucide aide les indépendants et PME à comprendre, simuler et optimiser leur activité.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+
+<div id="gate">
+  <div id="gate-box">
+    <div class="brand"><span class="brand-icon">L</span><span>Luci<span>de</span></span></div>
+    <h2 id="gate-title">Créez votre compte</h2>
+    <p class="muted">Pilotez votre entreprise, sans les calculs compliqués.</p>
+    <label>Email<input id="gate-email" type="email" placeholder="vous@email.com"></label>
+    <label>Mot de passe<input id="gate-password" type="password" placeholder="8 caractères minimum"></label>
+    <p class="muted" id="gate-error" style="color:var(--red);"></p>
+    <button class="btn primary full" id="gate-btn" onclick="handleAuth()">Créer mon compte</button>
+    <p class="muted" style="text-align:center;margin-top:14px;"><a href="#" id="gate-toggle" onclick="toggleAuthMode(event)">Déjà un compte ? Se connecter</a></p>
+  </div>
+</div>
+<aside class="sidebar" id="sidebar">
+  <div class="brand"><span class="brand-icon">L</span><span>Luci<span>de</span></span></div>
+  <div class="workspace"><div class="avatar" id="avatar">L</div><div><b id="ws-name">Mon espace</b><small id="plan-label" title="Actualiser mon plan" style="cursor:pointer" onclick="loadPlan(true)">Plan Free</small></div><button onclick="handleLogout()" title="Se déconnecter">⌄</button></div>
+  <nav>
+    <button class="nav active" data-view="dashboard">⌂ <span>Tableau de bord</span></button>
+    <button class="nav" data-view="transactions">↕ <span>Transactions</span></button>
+    <button class="nav" data-view="invoices">▤ <span>Facturation</span></button>
+    <button class="nav" data-view="simulator">⌁ <span>Simulations</span><i>PRO</i></button>
+    <button class="nav" data-view="forecast">◷ <span>Prévisions</span><i>PRO</i></button>
+    <button class="nav" data-view="analytics">◒ <span>Analyses</span></button>
+    <button class="nav" data-view="optimization">✦ <span>Optimisation</span><i>PRO</i></button>
+    <button class="nav" data-view="team">♙ <span>Collaborateurs</span><i>PRO+</i></button>
+    <button class="nav" data-view="settings">⚙ <span>Paramètres</span></button>
+  </nav>
+  <div class="sidebar-bottom">
+    <button class="upgrade" data-view-target="plans"><strong id="up-t">Passer à Lucide Pro</strong><small id="up-s">Simulations, prévisions, pistes d’optimisation →</small></button>
+    
+  </div>
+</aside>
+
+<main class="main">
+<header class="topbar">
+  <button class="mobile" id="mobile">☰</button>
+  <div><small class="eyebrow" id="today"></small><h1 id="title">Bonjour 👋</h1></div>
+  <div class="top-actions"><button class="icon" id="theme">◐</button><button class="btn primary" data-view-target="invoices">+ Nouvelle facture</button></div>
+</header>
+
+<section class="view active" id="dashboard">
+  <div class="welcome"><div><span class="tag">VUE D’ENSEMBLE</span><h2 id="welcome-h">Votre entreprise, sans les calculs compliqués.</h2><p id="welcome-p">Lucide transforme vos recettes, dépenses et prévisions en informations compréhensibles et en scénarios concrets.</p></div><div class="score"><b id="score">—</b><span>Marge du mois<br><small id="score-s">Pas encore de données</small></span></div></div>
+  <div class="perso"><div id="perso-actions"></div><p class="muted" id="demo-note"></p></div>
+  <div class="kpis">
+    <article><small>CA encaissé</small><strong id="k-ca">0 €</strong><em id="k-ca-e">—</em><span>vs mois précédent</span></article>
+    <article><small>Dépenses</small><strong id="k-dep">0 €</strong><em id="k-dep-e">—</em><span>vs mois précédent</span></article>
+    <article><small>Résultat estimé</small><strong id="k-res">0 €</strong><em id="k-res-e">—</em><span>ce mois</span></article>
+    <article><small>Trésorerie</small><strong id="k-tre">0 €</strong><span>recettes − dépenses cumulées</span></article>
+  </div>
+  <div class="grid two">
+    <article class="panel large"><div class="panel-head"><div><h3>Votre activité</h3><small>Encaissements et dépenses, 6 derniers mois</small></div></div><div class="chart-box"><canvas id="mainChart"></canvas></div></article>
+    <article class="panel"><div class="panel-head"><div><h3>À surveiller</h3><small id="alerts-n">Aucune alerte</small></div></div><div id="alerts"></div></article>
+  </div>
+  <div class="grid three">
+    <article class="panel"><h3>Factures à encaisser</h3><small>En attente de paiement</small><div class="between" style="margin-top:14px"><b id="p-enc">0 €</b><span id="p-enc-n">aucune facture</span></div></article>
+    <article class="panel"><h3>Prochaines échéances</h3><small>Factures clients non payées</small><div id="deadlines"></div></article>
+    <article class="panel green"><span class="tag">SIMULATION</span><h3>Et si vous augmentiez vos tarifs ?</h3><p class="muted">Mesurez l’impact avant de prendre la décision.</p><button class="btn primary" data-view-target="simulator">Tester →</button></article>
+  </div>
+</section>
+
+<section class="view" id="transactions"><div class="heading"><div><small class="eyebrow">GESTION</small><h2>Transactions</h2><p>Recettes, dépenses et catégorisation.</p></div><div><button class="btn ghost" id="csv">Exporter CSV</button> <button class="btn primary" id="addTx">+ Ajouter</button></div></div><div class="filters"><input id="search" placeholder="Rechercher…"><select id="filter"><option value="all">Tout</option><option value="income">Recettes</option><option value="expense">Dépenses</option></select></div><article class="panel table"><table><thead><tr><th>Date</th><th>Libellé</th><th>Catégorie</th><th>Type</th><th>Montant</th><th></th></tr></thead><tbody id="txTable"></tbody></table></article></section>
+
+<section class="view" id="invoices"><div class="heading"><div><small class="eyebrow">FACTURATION</small><h2>Factures</h2><p>Créez et suivez vos factures clients.</p></div><button class="btn primary" id="newInvoice">+ Créer une facture</button></div>
+<div class="invoice-kpis"><div><small>À encaisser</small><b id="i-enc">0 €</b></div><div><small>En retard</small><b class="red" id="i-late">0 €</b></div><div><small>Payées</small><b id="i-paid">0 €</b></div></div>
+<article class="panel table"><table><thead><tr><th>N°</th><th>Client</th><th>Date</th><th>Échéance</th><th>Montant</th><th>Statut</th></tr></thead><tbody id="invoiceTable"></tbody></table></article>
+<div class="e-invoice"><b>⚡ Facturation électronique</b><p>Lucide prépare les données nécessaires à vos factures. L’émission/réception conforme devra être reliée à une plateforme de dématérialisation partenaire (PDP) adaptée à votre entreprise.</p><span>Préparation réforme · 2026/2027</span></div>
+</section>
+
+<section class="view" id="simulator"><div class="heading"><div><small class="eyebrow">DÉCISION</small><h2>Simulateur</h2><p>Testez une décision avant de la prendre.</p></div><span class="tag">PRO</span></div>
+<div class="grid two"><article class="panel form"><h3>Votre scénario</h3>
+<label>Prix moyen <output id="priceO">0 €</output><input type="range" id="price" min="0" max="3000" step="10" value="0"></label>
+<label>Ventes / mois <output id="salesO">0</output><input type="range" id="sales" min="0" max="200" value="0"></label>
+<label>Charges variables <output id="varO">0 %</output><input type="range" id="variable" min="0" max="80" value="0"></label>
+<label>Charges fixes <output id="fixedO">0 €</output><input type="range" id="fixed" min="0" max="15000" step="50" value="0"></label>
+<button class="btn ghost full" id="simFromData" type="button">Partir de mes chiffres</button>
+<button class="btn primary full" id="saveScenario" style="margin-top:8px">Enregistrer le scénario</button></article>
+<article class="panel result"><span class="tag">RÉSULTAT</span><h3>Avec ces hypothèses</h3><strong id="profit">0 €</strong><small>résultat estimé / mois</small><div class="result-line"><span>CA</span><b id="simCa">0 €</b></div><div class="result-line"><span>Charges variables</span><b id="simVar">0 €</b></div><div class="result-line"><span>Charges fixes</span><b id="simFix">0 €</b></div><div class="result-line highlight"><span>Marge</span><b id="margin">0 %</b></div><p id="simMessage" class="muted"></p></article></div>
+<article class="panel"><h3>Scénarios sauvegardés</h3><div id="scenarios" class="scenarios"></div></article></section>
+
+<section class="view" id="forecast"><div class="heading"><div><small class="eyebrow">PROJECTION</small><h2>Prévisions</h2><p>Anticipez votre trésorerie à 30, 60 et 90 jours.</p></div><span class="tag">PRO</span></div>
+<div class="forecast-cards"><div><small>30 jours</small><b id="f30">—</b><span>trésorerie projetée</span></div><div><small>60 jours</small><b id="f60">—</b><span>trésorerie projetée</span></div><div><small>90 jours</small><b id="f90">—</b><span>trésorerie projetée</span></div></div>
+<article class="panel"><h3>Projection de trésorerie</h3><div class="chart-box"><canvas id="forecastChart"></canvas></div></article>
+<div class="notice"><b>Comment Lucide calcule ?</b><p>La projection prolonge votre trésorerie actuelle avec la moyenne mensuelle (recettes moins dépenses) de vos 3 derniers mois de données. C’est une estimation, pas une garantie.</p></div></section>
+
+<section class="view" id="analytics"><div class="heading"><div><small class="eyebrow">ANALYSE</small><h2>Analyses</h2><p>Comprendre ce qui fait gagner ou perdre de l’argent (6 derniers mois).</p></div></div>
+<div class="kpis"><article><small>Marge moyenne</small><strong id="a-marge">—</strong></article><article><small>Recette moyenne</small><strong id="a-panier">—</strong></article><article><small>Dépenses / recettes</small><strong id="a-ratio">—</strong></article><article><small>Clients facturés (90 j)</small><strong id="a-clients">0</strong></article></div>
+<div class="grid two"><article class="panel"><h3>Répartition des dépenses</h3><div class="chart-box"><canvas id="expenseChart"></canvas></div></article><article class="panel"><h3>Lecture Lucide</h3><div id="insights"></div></article></div></section>
+
+<section class="view" id="optimization"><div class="heading"><div><small class="eyebrow">COPILOTE</small><h2>Optimisation</h2><p>Des pistes détectées dans vos données.</p></div><span class="tag">PRO</span></div>
+<div class="op-list" id="op-list"></div>
+<p class="disclaimer">Les recommandations sont des aides à la décision et ne remplacent pas un expert-comptable, avocat ou conseiller fiscal.</p></section>
+
+<section class="view" id="team"><div class="heading"><div><small class="eyebrow">LUCIDE PREMIUM</small><h2>Collaborateurs</h2><p>Travaillez avec votre équipe ou votre comptable.</p></div><span class="tag premium">BIENTÔT</span></div>
+<article class="panel"><h3>Bientôt disponible</h3><p class="muted">Vous pourrez inviter un comptable ou des collaborateurs et choisir ce qu’ils peuvent voir. Cette fonction n’est pas encore active.</p></article></section>
+
+<section class="view" id="settings"><div class="heading"><div><small class="eyebrow">COMPTE</small><h2>Paramètres</h2><p>Votre compte et votre abonnement.</p></div></div>
+<article class="panel settings"><label>Email<input id="s-email" readonly></label><label>Plan actuel<input id="s-plan" readonly></label><div><button class="btn primary" onclick="showOnboarding()">Modifier mon profil</button> <button class="btn ghost hidden" id="portalBtn">Gérer mon abonnement</button></div></article></section>
+
+<section class="view" id="plans"><div class="pricing"><span class="tag">LUCIDE</span><h2>Choisissez votre façon de piloter.</h2><p>Commencez simplement, puis ajoutez les fonctions dont votre entreprise a besoin.</p>
+<div class="plans"><article><small>GRATUIT</small><h3>Lucide Free</h3><b>0 €</b><p>Pour découvrir Lucide.</p><ul><li>Tableau de bord</li><li>Transactions manuelles</li><li>Factures de base</li><li>Analyses essentielles</li></ul><button class="btn ghost full" id="stripeFree" disabled>Plan actuel</button></article>
+<article class="featured"><span class="recommended">POPULAIRE</span><small>PRO</small><h3>Lucide Pro</h3><b>4,99 € <small>/ mois</small></b><p>Pour les indépendants qui veulent piloter sérieusement leur activité.</p><ul><li>Tout Free</li><li>Simulations et scénarios enregistrés</li><li>Prévisions 90 jours</li><li>Pistes d’optimisation</li></ul><button class="btn primary full" id="stripePro">Passer à Pro</button></article>
+<article><small>PREMIUM</small><h3>Lucide Premium</h3><b>9,99 € <small>/ mois</small></b><p>Pour les petites équipes et entreprises en croissance.</p><ul><li>Tout Pro</li><li>Jusqu’à 5 collaborateurs (bientôt)</li><li>Rôles et permissions (bientôt)</li><li>Multi-entreprises (bientôt)</li><li>Budgets par projet (bientôt)</li><li>Support prioritaire</li></ul><button class="btn dark full" id="stripePremium">Passer à Premium</button></article></div>
+<div class="stripe-note"><b>Paiement sécurisé par Stripe</b><p>Vous ne saisissez jamais vos coordonnées bancaires sur Lucide.</p></div></div></section>
+</main>
+
+<div class="modal hidden" id="modal"><div class="modal-box"><button id="closeModal">×</button><div id="modalContent"></div></div></div>
+<script src="config.js"></script><script src="app.js"></script>
+</body></html>
